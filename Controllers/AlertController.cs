@@ -22,30 +22,20 @@ namespace API_CRUD.Controllers
             var connection = new SqlConnection("data source=104.217.253.86;initial catalog=tracking;user id=alumno;password=12345678");
             connection.Open();
 
-            var sql = $"SELECT top {top}* FROM alert";
+            var sql =   @$"SELECT top {top} * 
+                           FROM alert as a
+                           INNER JOIN enterprise as e ON(e.id = a.enterpriseid)";
             var command = new SqlCommand(sql, connection);
             var reader = command.ExecuteReader();
 
-            while (reader.Read())
-            {
-
-                result.Add(
-                    new Alert(
-                            reader.GetInt32(0), 
-                            reader.GetString(1), 
-                            reader.GetString(2), 
-                            reader.GetString(3), 
-                            reader.GetInt32(4), 
-                            reader.GetString(5)
-                        )
-                    );
-            }
+            result = this.AddAlert(reader);
 
             reader.Close();
             connection.Close();
 
             return result;
         }
+
         //GET: api/Alert
         [HttpGet()]
         public IEnumerable<Alert> Get()
@@ -55,24 +45,14 @@ namespace API_CRUD.Controllers
             var connection = new SqlConnection("data source=104.217.253.86;initial catalog=tracking;user id=alumno;password=12345678");
             connection.Open();
 
-            var sql = $"SELECT * FROM alert";
+            var sql = @$"SELECT * 
+                           FROM alert as a
+                           INNER JOIN enterprise as e ON(e.id = a.enterpriseid)";
+            
             var command = new SqlCommand(sql, connection);
             var reader = command.ExecuteReader();
 
-            while (reader.Read())
-            {
-
-                result.Add(
-                    new Alert(
-                            reader.GetInt32(0),
-                            reader.GetString(1),
-                            reader.GetString(2),
-                            reader.GetString(3),
-                            reader.GetInt32(4),
-                            reader.GetString(5)
-                        )
-                    );
-            }
+            result = this.AddAlert(reader);
 
             reader.Close();
             connection.Close();
@@ -80,14 +60,7 @@ namespace API_CRUD.Controllers
             return result;
         }
 
-        // GET: api/Alert/5
-        /*
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-        */
+
         // POST: api/Alert
         [HttpPost]
         public OkObjectResult Post([FromBody] Alert alert)
@@ -95,21 +68,16 @@ namespace API_CRUD.Controllers
             var connection = new SqlConnection("data source=104.217.253.86;initial catalog=tracking;user id=alumno;password=12345678");
             connection.Open();
 
-            var sql = $"INSERT INTO alert(id, name, notifywhenarriving, notifywhenleaving, enterpriseid, active) values ({alert.id}, '{alert.name}', '{alert.notifywhenarriving}', '{alert.notifywhenleaving}', '{alert.enterpriseid}', '{alert.active}')";
+            var sql = $"INSERT INTO alert(id, name, notifywhenarriving, notifywhenleaving, enterpriseid, active) values ({alert.Id}, '{alert.Name}', '{alert.Notifywhenarriving}', '{alert.Notifywhenleaving}', '{alert.enterpriseid}', '{alert.Active}')";
+            
             var command = new SqlCommand(sql, connection);
-            try
-            {
-                command.ExecuteNonQuery();
-            }
-            catch (Exception e)
-            {
-                return this.Ok($"No se inserto: {e.Message}");
-                throw;
-            }
+            string response = GetQueryResponse(command, "Agregar");
+            
             connection.Close();
-            return this.Ok("Se inserto correctamente");
+            return Ok(response);
 
         } 
+
 
         // PUT: api/Alert/5
         [HttpPut("{id}")]
@@ -119,23 +87,18 @@ namespace API_CRUD.Controllers
             connection.Open();
 
             var sql =   @$"UPDATE alert
-                        set name = '{alert.name}', notifywhenarriving = '{alert.notifywhenarriving}', 
-                        notifywhenleaving = '{alert.notifywhenleaving}',
-                        enterpriseid = {alert.enterpriseid}, active = '{alert.active}'
+                        set name = '{alert.Name}', notifywhenarriving = '{alert.Notifywhenarriving}', 
+                        notifywhenleaving = '{alert.Notifywhenleaving}',
+                        enterpriseid = {alert.enterpriseid}, active = '{alert.Active}'
                         WHERE id = {id}";
-            var command = new SqlCommand(sql, connection);
-            try
-            {
-                command.ExecuteNonQuery();
-            }
-            catch (Exception e)
-            {
-                return this.Ok($"Los datos no se actualizaron: {e.Message}");
-                throw;
-            }
+
+            var command = new SqlCommand(sql, connection);            
+            string response = GetQueryResponse(command, "Modificar");
+
             connection.Close();
-            return this.Ok("Los datos se actualizaron correctamente");
+            return Ok(response);
         }
+
 
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
@@ -143,23 +106,62 @@ namespace API_CRUD.Controllers
         {
             var connection = new SqlConnection("data source=104.217.253.86;initial catalog=tracking;user id=alumno;password=12345678");
             connection.Open();
-            string mensage;
+
             var sql =@$"DELETE 
                         FROM alert 
                         WHERE id = {id}";
+
             var command = new SqlCommand(sql, connection);
+            string response = GetQueryResponse(command, "Eliminar");
+
+            connection.Close();
+            return Ok(response);
+            
+        }
+
+
+        //Methods
+        private List<Alert> AddAlert(SqlDataReader reader)
+        {
+            var alerts = new List<Alert>();
+            while (reader.Read())
+            {
+                var alert = new Alert(
+                    //Id = reader[reader.GetOrdinal("a.id")] as int? ?? default(int)
+                    reader.GetInt32(0),
+                    reader.GetString(1),
+                    reader.GetString(2),
+                    reader.GetString(3),
+                    reader.GetInt32(4),
+                    reader.GetString(5)
+                );
+                var enterprise = new Enterprise(
+                    reader.GetInt32(6),
+                    reader[7] as string,
+                    reader[8] as int? ?? default(int),
+                    reader[9] as string,
+                    reader[10] as int? ?? default(int)
+                    );
+                alert.Enterprise = enterprise;
+                alerts.Add(alert);
+            }
+            return alerts;
+        }
+
+        private String GetQueryResponse(SqlCommand command, string operationName)
+        {
+            string message;
             try
             {
-                mensage = (command.ExecuteNonQuery() <= 0 ? "No se vio afectado ningun registro" : "Los datos se eliminaron correctamente");
+                message = (command.ExecuteNonQuery() == 0 ? "No se vio afectado ningun registro" : $"Operacion de {operationName} se ha efectuado exitosamente");
             }
             catch (Exception e)
             {
-                mensage = $"Los datos no se eliminaron: {e.Message}";
+                message = $"Operacion de {operationName} fallo: {e.Message}";
                 throw;
             }
-            connection.Close();
-            return Ok(mensage);
-            
+            return message;
         }
+
     }
 }

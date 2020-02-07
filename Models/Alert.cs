@@ -6,25 +6,28 @@ namespace API_CRUD
     {
         public Alert()
         {
-            this.name = "";
-            this.notifywhenarriving = "";
-            this.notifywhenleaving = "";
-            this.active = "";
+            this.Name = "";
+            this.Notifywhenarriving = "";
+            this.Notifywhenleaving = "";
+            this.Active = "";
+            this.Enterprise = new Enterprise();
         }
         public Alert(int p_id, String p_name, String p_notifywhenarriving, String p_notifywhenleaving, int p_enterpriseid, String p_active)
         {
-            this.id = p_id;
-            this.name = p_name;
-            this.notifywhenarriving = p_notifywhenarriving;
-            this.notifywhenleaving = p_notifywhenleaving;
+            this.Id = p_id;
+            this.Name = p_name;
+            this.Notifywhenarriving = p_notifywhenarriving;
+            this.Notifywhenleaving = p_notifywhenleaving;
             this.enterpriseid = p_enterpriseid;
-            this.active = p_active;
+            this.Active = p_active;
+            this.Enterprise = new Enterprise();
         }
-        public int id { get; set; }
-        public String name { get; set; }
-        public String notifywhenarriving{ get; set; }
-        public String notifywhenleaving { get; set; }
+        public int Id { get; set; }
+        public String Name { get; set; }
+        public String Notifywhenarriving{ get; set; }
+        public String Notifywhenleaving { get; set; }
         public int enterpriseid { get; set; }
-        public String active { get; set; }
+        public Enterprise Enterprise{ get; set; }
+        public String Active { get; set; }
     }
 }
