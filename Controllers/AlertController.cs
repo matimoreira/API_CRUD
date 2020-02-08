@@ -15,7 +15,7 @@ namespace API_CRUD.Controllers
     {
         // GET: api/Alert
         [HttpGet("{top}")]
-        public IEnumerable<Alert> Get(int top)
+        public IEnumerable<AlertDTO> Get(int top)
         {
             var dao = new AlertDAO();
             return dao.getTopAlert(top);
@@ -23,7 +23,7 @@ namespace API_CRUD.Controllers
 
         //GET: api/Alert
         [HttpGet()]
-        public IEnumerable<Alert> Get()
+        public IEnumerable<AlertDTO> Get()
         {
             var dao = new AlertDAO();            
             return dao.getAllAlert();
@@ -32,26 +32,40 @@ namespace API_CRUD.Controllers
 
         // POST: api/Alert
         [HttpPost]
-        public OkObjectResult Post([FromBody] Alert alert)
+        public ActionResult Post([FromBody] AlertDTO alert)
         {
-            var connection = new SqlConnection("data source=104.217.253.86;initial catalog=tracking;user id=alumno;password=12345678");
-            connection.Open();
-
-            var sql = $"INSERT INTO alert(id, name, notifywhenarriving, notifywhenleaving, enterpriseid, active) values ({alert.Id}, '{alert.Name}', '{alert.Notifywhenarriving}', '{alert.Notifywhenleaving}', '{alert.enterpriseid}', '{alert.Active}')";
-            
-            var command = new SqlCommand(sql, connection);
-            string response = GetQueryResponse(command, "Agregar");
-            
-            connection.Close();
-            return Ok(response);
-
-        } 
+            var dao = new AlertDAO();
+            int resultNonQuery;
+            try
+            {
+                resultNonQuery = dao.addAlert(alert);
+            }
+            catch (Exception e)
+            {
+                return this.BadRequest($"Operacion de Modificar fallo: {e.Message}");
+                throw;
+            }
+            return this.GetQueryResponse(resultNonQuery, "Agregar");
+        }
 
 
         // PUT: api/Alert/5
         [HttpPut("{id}")]
-        public OkObjectResult Put(int id, [FromBody] Alert alert)
+        public ActionResult Put(int id, [FromBody] AlertDTO alert)
         {
+            var dao = new AlertDAO();
+            int resultNonQuery;
+            try
+            {
+                resultNonQuery = dao.editAlert(id, alert);
+            }
+            catch (Exception e)
+            {
+                return this.BadRequest($"Operacion de Modificar fallo: {e.Message}");
+                throw;
+            }
+            return this.GetQueryResponse(resultNonQuery, "Modificar");
+            /*
             var connection = new SqlConnection("data source=104.217.253.86;initial catalog=tracking;user id=alumno;password=12345678");
             connection.Open();
 
@@ -66,6 +80,7 @@ namespace API_CRUD.Controllers
 
             connection.Close();
             return Ok(response);
+            */
         }
 
 
@@ -74,53 +89,26 @@ namespace API_CRUD.Controllers
         public ActionResult Delete(int id)
         {
             var dao = new AlertDAO();
-            return this.Ok(dao.removeAlert(id));
-            
+            int resultNonQuery;
+            try
+            {
+                resultNonQuery = dao.removeAlert(id);
+            }
+            catch (Exception e)
+            {
+                return this.BadRequest($"Operacion de eliminar fallo: {e.Message}");
+                throw;
+            }
+            return this.GetQueryResponse(resultNonQuery, "Eliminar");
         }
 
 
         //Methods
-        /*
-        private List<Alert> AddAlert(SqlDataReader reader)
-        {
-            var alerts = new List<Alert>();
-            while (reader.Read())
-            {
-                var alert = new Alert(
-                    //Id = reader[reader.GetOrdinal("a.id")] as int? ?? default(int)
-                    reader.GetInt32(0),
-                    reader.GetString(1),
-                    reader.GetString(2),
-                    reader.GetString(3),
-                    reader.GetInt32(4),
-                    reader.GetString(5)
-                );
-                var enterprise = new Enterprise(
-                    reader.GetInt32(6),
-                    reader[7] as string,
-                    reader[8] as int? ?? default(int),
-                    reader[9] as string,
-                    reader[10] as int? ?? default(int)
-                    );
-                alert.Enterprise = enterprise;
-                alerts.Add(alert);
-            }
-            return alerts;
-        }
-        */
-        private String GetQueryResponse(SqlCommand command, string operationName)
+        private ActionResult GetQueryResponse(int resultNonQuery, string operationName)
         {
             string message;
-            try
-            {
-                message = (command.ExecuteNonQuery() == 0 ? "No se vio afectado ningun registro" : $"Operacion de {operationName} se ha efectuado exitosamente");
-            }
-            catch (Exception e)
-            {
-                message = $"Operacion de {operationName} fallo: {e.Message}";
-                throw;
-            }
-            return message;
+            message = (resultNonQuery == 0 ? "No se vio afectado ningun registro" : $"Operacion de {operationName} se ha efectuado exitosamente");
+            return this.Ok(message);
         }
 
     }

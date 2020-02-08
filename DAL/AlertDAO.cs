@@ -5,27 +5,23 @@ using System.Data.SqlClient;
 
 namespace API_CRUD
 {
-    public class AlertDAO
+    public class AlertDAO : DAOBase
     {
-        ~AlertDAO()
+        private List<AlertDTO> getAlert(SqlDataReader reader)
         {
-            Connection.disconnect();
-        }
-        private List<Alert> getAlert(SqlDataReader reader)
-        {
-            var alerts = new List<Alert>();
+            var alerts = new List<AlertDTO>();
             while (reader.Read())
             {
-                var alert = new Alert(
+                var alert = new AlertDTO
+                {
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Notifywhenarriving = reader.GetString(2),
+                    Notifywhenleaving =  reader.GetString(3),
+                    Active = reader.GetString(5)
+                };
                     //Id = reader[reader.GetOrdinal("a.id")] as int? ?? default(int)
-                    reader.GetInt32(0),
-                    reader.GetString(1),
-                    reader.GetString(2),
-                    reader.GetString(3),
-                    reader.GetInt32(4),
-                    reader.GetString(5)
-                );
-                var enterprise = new Enterprise(
+                var enterprise = new EnterpriseDTO(
                     reader.GetInt32(6),
                     reader[7] as string,
                     reader[8] as int? ?? default(int),
@@ -37,45 +33,42 @@ namespace API_CRUD
             }
             return alerts;
         }
-        public List<Alert> getAllAlert()
+        public List<AlertDTO> getAllAlert()
         {
             var sql = @$"SELECT * 
                            FROM alert as a
                            INNER JOIN enterprise as e ON(e.id = a.enterpriseid)";
-            var reader = Connection.readInfo(sql);
+            var reader = this.GetReader(sql);
             return getAlert(reader); 
         }
-        public List<Alert> getTopAlert(int top)
+        public List<AlertDTO> getTopAlert(int top)
         {
             var sql = @$"SELECT top {top} * 
                            FROM alert as a
                            INNER JOIN enterprise as e ON(e.id = a.enterpriseid)";
-            var reader = Connection.readInfo(sql);
+            var reader = this.GetReader(sql);
             return getAlert(reader);
-        }
-        private String GetQueryResponse(int commandResult, string operationName)
-        {
-            string message;
-            try
-            {
-                message = (commandResult == 0 ? "No se vio afectado ningun registro" : $"Operacion de {operationName} se ha efectuado exitosamente");
-            }
-            catch (Exception e)
-            {
-                message = $"Operacion de {operationName} fallo: {e.Message}";
-                throw;
-            }
-            return message;
-        }
-        public string removeAlert(int id)
+        }      
+        public int removeAlert(int id)
         {
             var sql = @$"DELETE 
                         FROM alert 
                         WHERE id = {id}";
-
-            string response = GetQueryResponse(Connection.deleteInfo(sql), "Eliminar");
-            return response;
+            return this.GetNonQuery(sql);
         }
-
+        public int addAlert(AlertDTO alert)
+        {
+            var sql = $"INSERT INTO alert(id, name, notifywhenarriving, notifywhenleaving, enterpriseid, active) values ({alert.Id}, '{alert.Name}', '{alert.Notifywhenarriving}', '{alert.Notifywhenleaving}', '{alert.Enterprise.Id}', '{alert.Active}')";
+            return this.GetNonQuery(sql);
+        }
+        internal int editAlert(int id, AlertDTO alert)
+        {
+            var sql = @$"UPDATE alert
+                        set name = '{alert.Name}', notifywhenarriving = '{alert.Notifywhenarriving}', 
+                        notifywhenleaving = '{alert.Notifywhenleaving}',
+                        enterpriseid = {alert.Enterprise.Id}, active = '{alert.Active}'
+                        WHERE id = {id}";
+            return this.GetNonQuery(sql);
+        }
     }
 }
