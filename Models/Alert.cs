@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
 
 namespace API_CRUD
 {
@@ -29,5 +31,35 @@ namespace API_CRUD
         public int enterpriseid { get; set; }
         public Enterprise Enterprise{ get; set; }
         public String Active { get; set; }
+
+       
+        public List<Alert> getAllAlert(string sql)
+        {
+            
+            var reader = Connection.readInfo(sql);
+            var alerts = new List<Alert>();
+            while (reader.Read())
+            {
+                var alert = new Alert(
+                    //Id = reader[reader.GetOrdinal("a.id")] as int? ?? default(int)
+                    reader.GetInt32(0),
+                    reader.GetString(1),
+                    reader.GetString(2),
+                    reader.GetString(3),
+                    reader.GetInt32(4),
+                    reader.GetString(5)
+                );
+                var enterprise = new Enterprise(
+                    reader.GetInt32(6),
+                    reader[7] as string,
+                    reader[8] as int? ?? default(int),
+                    reader[9] as string,
+                    reader[10] as int? ?? default(int)
+                    );
+                alert.Enterprise = enterprise;
+                alerts.Add(alert);
+            }
+            return alerts;
+        }
     }
 }

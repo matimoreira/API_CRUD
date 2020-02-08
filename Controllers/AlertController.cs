@@ -17,47 +17,16 @@ namespace API_CRUD.Controllers
         [HttpGet("{top}")]
         public IEnumerable<Alert> Get(int top)
         {
-            var result = new List<Alert>();
-
-            var connection = new SqlConnection("data source=104.217.253.86;initial catalog=tracking;user id=alumno;password=12345678");
-            connection.Open();
-
-            var sql =   @$"SELECT top {top} * 
-                           FROM alert as a
-                           INNER JOIN enterprise as e ON(e.id = a.enterpriseid)";
-            var command = new SqlCommand(sql, connection);
-            var reader = command.ExecuteReader();
-
-            result = this.AddAlert(reader);
-
-            reader.Close();
-            connection.Close();
-
-            return result;
+            var dao = new AlertDAO();
+            return dao.getTopAlert(top);
         }
 
         //GET: api/Alert
         [HttpGet()]
         public IEnumerable<Alert> Get()
         {
-            var result = new List<Alert>();
-
-            var connection = new SqlConnection("data source=104.217.253.86;initial catalog=tracking;user id=alumno;password=12345678");
-            connection.Open();
-
-            var sql = @$"SELECT * 
-                           FROM alert as a
-                           INNER JOIN enterprise as e ON(e.id = a.enterpriseid)";
-            
-            var command = new SqlCommand(sql, connection);
-            var reader = command.ExecuteReader();
-
-            result = this.AddAlert(reader);
-
-            reader.Close();
-            connection.Close();
-
-            return result;
+            var dao = new AlertDAO();            
+            return dao.getAllAlert();
         }
 
 
@@ -102,25 +71,16 @@ namespace API_CRUD.Controllers
 
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public OkObjectResult Delete(int id)
+        public ActionResult Delete(int id)
         {
-            var connection = new SqlConnection("data source=104.217.253.86;initial catalog=tracking;user id=alumno;password=12345678");
-            connection.Open();
-
-            var sql =@$"DELETE 
-                        FROM alert 
-                        WHERE id = {id}";
-
-            var command = new SqlCommand(sql, connection);
-            string response = GetQueryResponse(command, "Eliminar");
-
-            connection.Close();
-            return Ok(response);
+            var dao = new AlertDAO();
+            return this.Ok(dao.removeAlert(id));
             
         }
 
 
         //Methods
+        /*
         private List<Alert> AddAlert(SqlDataReader reader)
         {
             var alerts = new List<Alert>();
@@ -147,7 +107,7 @@ namespace API_CRUD.Controllers
             }
             return alerts;
         }
-
+        */
         private String GetQueryResponse(SqlCommand command, string operationName)
         {
             string message;
