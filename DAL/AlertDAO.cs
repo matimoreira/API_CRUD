@@ -61,7 +61,7 @@ namespace API_CRUD
             var sql = $"INSERT INTO alert(id, name, notifywhenarriving, notifywhenleaving, enterpriseid, active) values ({alert.Id}, '{alert.Name}', '{alert.Notifywhenarriving}', '{alert.Notifywhenleaving}', '{alert.Enterprise.Id}', '{alert.Active}')";
             return this.GetNonQuery(sql);
         }
-        internal int editAlert(int id, AlertDTO alert)
+        public int editAlert(int id, AlertDTO alert)
         {
             var sql = @$"UPDATE alert
                         set name = '{alert.Name}', notifywhenarriving = '{alert.Notifywhenarriving}', 
